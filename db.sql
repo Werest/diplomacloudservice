@@ -1,20 +1,21 @@
-create table if not exists tfile
+create table netology.tfile
 (
-    id          int auto_increment,
-    filename    varchar(255) null,
+    id          int auto_increment
+        primary key,
+    filename    varchar(255) not null,
     create_date datetime     null,
     size        bigint       null,
-    file        blob         null,
-    constraint tfile_pk
-        primary key (id)
+    file        longblob     null,
+    user_id     int          null,
+    constraint fuser_id
+        foreign key (user_id) references netology.user (id)
 );
 
-create table if not exists user
+create table netology.user
 (
-    id       int auto_increment,
+    id       int auto_increment
+        primary key,
     username varchar(300) null,
-    password text         null,
-    constraint user_pk
-        primary key (id)
+    password text         null
 );
 
