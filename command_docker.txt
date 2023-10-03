@@ -1,0 +1,12 @@
+docker build -t frontdimplom .
+docker run -itd --name frontdiplomcon -p 8080:8080 frontdimplom
+
+
+##change docker dir https://predvoditelev.ru/notes/change-docker-data-location-in-windows/
+wsl --list -v
+Состояние дистрибутивов (STATE) должно быть Stopped.
+
+wsl --export docker-desktop-data "f:\docker-desktop-data.tar"
+wsl --unregister docker-desktop-data
+
+wsl --import docker-desktop-data "f:\docker\wsl" "f:\docker-desktop-data.tar" --version 2

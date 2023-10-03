@@ -1,4 +1,12 @@
-create table netology.tfile
+create table if not exists netology.user
+(
+    id       int auto_increment
+        primary key,
+    username varchar(300) null,
+    password text         null
+);
+
+create table if not exists netology.tfile
 (
     id          int auto_increment
         primary key,
@@ -10,12 +18,3 @@ create table netology.tfile
     constraint fuser_id
         foreign key (user_id) references netology.user (id)
 );
-
-create table netology.user
-(
-    id       int auto_increment
-        primary key,
-    username varchar(300) null,
-    password text         null
-);
-

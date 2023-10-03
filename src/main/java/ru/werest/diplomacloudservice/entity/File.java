@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 @DynamicUpdate
 public class File {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
     @Column(name = "filename")

@@ -1,43 +1,65 @@
 package ru.werest.diplomacloudservice.services;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import ru.werest.diplomacloudservice.entity.File;
+import ru.werest.diplomacloudservice.entity.User;
+import ru.werest.diplomacloudservice.exception.FileException;
 import ru.werest.diplomacloudservice.repository.FileRepository;
+import ru.werest.diplomacloudservice.repository.UserRepository;
 import ru.werest.diplomacloudservice.request.ChangeFilenameRequest;
 import ru.werest.diplomacloudservice.response.FileListResponse;
 
 import java.io.IOException;
+import java.security.Principal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class FileService {
 
     private final FileRepository repository;
 
-    public FileService(FileRepository repository) {
-        this.repository = repository;
+    private final UserRepository userRepository;
+
+    private User findUserByName(Principal user) {
+        User userEntity = userRepository.findUserByUsername(user.getName());
+        if (userEntity == null) {
+            throw new RuntimeException("Неверно передан пользователь!");
+        }
+        return userEntity;
     }
 
     @Transactional
-    public void saveFile(String authToken, String filename, MultipartFile multipartFile) throws IOException {
+    public void saveFile(Principal user, String filename, MultipartFile multipartFile) throws IOException {
+        User userEntity = findUserByName(user);
+
+        if (repository.existsAllByFilenameAndUser(filename, userEntity)) {
+            log.error("Файла существует! " + filename);
+            throw new FileException("Файла существует! " + filename + " нужно переименовать!");
+        }
+
         File file = new File();
         file.setFilename(filename);
         file.setFile(multipartFile.getBytes());
         file.setSize(multipartFile.getSize());
         file.setCreateDate(LocalDateTime.now());
+        file.setUser(userEntity);
 
         repository.save(file);
     }
 
     @Transactional
-    public void deleteFile(String filename) {
-        File file = repository.findFileByFilename(filename);
+    public void deleteFile(Principal user, String filename) {
+        User userEntity = findUserByName(user);
+
+        File file = repository.findFileByFilenameAndUser(filename, userEntity);
         if (file == null) {
             log.error("Файла не существует!");
             throw new RuntimeException("Файла не существует!");
@@ -45,8 +67,10 @@ public class FileService {
         repository.delete(file);
     }
 
-    public byte[] getFile(String filename) {
-        File file = repository.findFileByFilename(filename);
+    public byte[] getFile(Principal user, String filename) {
+        User userEntity = findUserByName(user);
+
+        File file = repository.findFileByFilenameAndUser(filename, userEntity);
         if (file == null) {
             log.error("Файла не существует!");
             throw new RuntimeException("Файла не существует!");
@@ -55,8 +79,10 @@ public class FileService {
     }
 
     @Transactional
-    public void putFile(String filename, ChangeFilenameRequest request) {
-        File file = repository.findFileByFilename(filename);
+    public void putFile(Principal user, String filename, ChangeFilenameRequest request) {
+        User userEntity = findUserByName(user);
+
+        File file = repository.findFileByFilenameAndUser(filename, userEntity);
         if (file == null) {
             log.error("Файла не существует!");
             throw new RuntimeException("Файла не существует!");
@@ -68,6 +94,7 @@ public class FileService {
     public List<FileListResponse> getFiles(Integer limit) {
         List<File> fileList = repository.findAll();
         return fileList.stream().map(f -> new FileListResponse(f.getFilename(), f.getSize()))
+                .limit(limit)
                 .collect(Collectors.toList());
     }
 }

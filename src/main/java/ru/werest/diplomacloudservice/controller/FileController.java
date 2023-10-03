@@ -1,5 +1,6 @@
 package ru.werest.diplomacloudservice.controller;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
@@ -11,6 +12,7 @@ import ru.werest.diplomacloudservice.response.FileListResponse;
 import ru.werest.diplomacloudservice.services.FileService;
 
 import java.io.IOException;
+import java.security.Principal;
 import java.util.List;
 
 import static ru.werest.diplomacloudservice.global.Constants.FILE;
@@ -18,43 +20,39 @@ import static ru.werest.diplomacloudservice.global.Constants.FILE;
 @RequestMapping("/")
 @Slf4j
 @RestController
+@RequiredArgsConstructor
 public class FileController {
 
     private final FileService service;
 
-    public FileController(FileService service) {
-        this.service = service;
-    }
-
     @PostMapping(FILE)
-    public void create(
-                       @RequestParam("filename") String filename,
+    public void create(Principal user, @RequestParam("filename") String filename,
                        MultipartFile file) throws IOException {
 
-        service.saveFile("12345", filename, file);
+        service.saveFile(user, filename, file);
         log.info("Файл сохранен!");
     }
 
     @DeleteMapping(FILE)
-    public void delete(@RequestParam("filename") String filename) {
-        service.deleteFile(filename);
+    public void delete(Principal user, @RequestParam("filename") String filename) {
+        service.deleteFile(user, filename);
         log.info("Файл удалён!");
     }
 
     @GetMapping(FILE)
-    public ResponseEntity<Resource> get(@RequestParam("filename") String filename) {
-        byte[] file = service.getFile(filename);
+    public ResponseEntity<Resource> get(Principal user, @RequestParam("filename") String filename) {
+        byte[] file = service.getFile(user, filename);
         return ResponseEntity.ok().body(new ByteArrayResource(file));
     }
 
     @PutMapping(FILE)
-    public void put(@RequestParam("filename") String filename, @RequestBody ChangeFilenameRequest request) {
-        service.putFile(filename, request);
+    public void put(Principal user, @RequestParam("filename") String filename, @RequestBody ChangeFilenameRequest request) {
+        service.putFile(user, filename, request);
         log.info("Имя файла было измено!");
     }
 
     @GetMapping("/list")
-    public List<FileListResponse> getFiles(@RequestParam("limit") Integer limit) {
+    public List<FileListResponse> getFiles(@RequestParam(name = "limit", defaultValue = "10") Integer limit) {
         return service.getFiles(limit);
     }
 
