@@ -25,7 +25,6 @@ public class File {
     private Long size;
 
     @Column(name = "file")
-    @Lob
     private byte[] file;
 
     @ManyToOne
