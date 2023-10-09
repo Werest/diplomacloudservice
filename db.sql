@@ -15,7 +15,7 @@ create table if not exists netology.tfile
     filename    varchar(255) not null,
     create_date timestamp,
     size        bigint,
-    file        bytea,
+    file        bytea not null,
     user_id     integer
         constraint tfile_user_null_fk
             references netology.user (id)

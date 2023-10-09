@@ -1,6 +1,5 @@
 package ru.werest.diplomacloudservice.controller;
 
-import jakarta.security.auth.message.AuthException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -18,13 +17,10 @@ public class AuthController {
         this.service = service;
     }
 
-
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest request) throws AuthException {
+    public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest request) {
         AuthResponse response = new AuthResponse();
         response.setAuthToken(service.login(request));
         return ResponseEntity.ok().body(response);
     }
-
-
 }

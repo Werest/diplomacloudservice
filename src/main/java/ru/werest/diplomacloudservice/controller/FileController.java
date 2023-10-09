@@ -48,7 +48,7 @@ public class FileController {
     @PutMapping(FILE)
     public void put(Principal user, @RequestParam("filename") String filename, @RequestBody ChangeFilenameRequest request) {
         service.putFile(user, filename, request);
-        log.info("Имя файла было измено!");
+        log.info("Имя файла было изменено!");
     }
 
     @GetMapping("/list")

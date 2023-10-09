@@ -15,7 +15,7 @@ public class File {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(name = "filename")
+    @Column(name = "filename", nullable = false)
     private String filename;
 
     @Column(name = "create_date")
@@ -24,7 +24,7 @@ public class File {
     @Column(name = "size")
     private Long size;
 
-    @Column(name = "file")
+    @Column(name = "file", nullable = false)
     private byte[] file;
 
     @ManyToOne

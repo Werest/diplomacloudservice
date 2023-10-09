@@ -1,60 +1,148 @@
 package ru.werest.diplomacloudservice.integration;
 
 import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.testcontainers.containers.GenericContainer;
+import org.springframework.http.MediaType;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.context.WebApplicationContext;
+import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
+import ru.werest.diplomacloudservice.entity.User;
+import ru.werest.diplomacloudservice.repository.UserRepository;
 import ru.werest.diplomacloudservice.request.LoginRequest;
 
-@Disabled
+import java.util.stream.Stream;
+
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Testcontainers
 @Slf4j
+@Disabled
 public class IntegrationTest {
-    String HOST = "http://localhost:";
-    int PORT = 5500;
+    private static final String ENDPOINT = "/login";
+
+    private static final String LOGIN = "test@test.ru";
+    private static final String PASSWORD = "test1234567890";
 
     @Autowired
-    TestRestTemplate restTemplate;
+    UserRepository userRepository;
+
+    @Autowired
+    WebApplicationContext webApplicationContext;
+
+    @Autowired
+    PasswordEncoder passwordEncoder;
+
+    ObjectMapper objectMapper = new ObjectMapper();
+
+    MockMvc mockMvc;
 
     @Container
-    GenericContainer<?> transfer_service = new GenericContainer<>("backend")
-            .withExposedPorts(8080);
+    static final PostgreSQLContainer<?> POSTGRES_CONTAINER = new PostgreSQLContainer<>("postgres")
+            .withDatabaseName("postgres")
+            .withUsername("postgres")
+            .withPassword("postgres")
+            .withInitScript("db.sql");
 
-
-    @Test
-    void Positive() {
-        Integer transferServicePort = transfer_service.getMappedPort(8080);
-
-        LoginRequest request = new LoginRequest();
-        request.setLogin("koko");
-        request.setPassword("koko");
-
-        ResponseEntity<String> response = restTemplate.postForEntity(
-                HOST + transferServicePort + "/login",
-                request,
-                String.class
-        );
-        Assertions.assertEquals(HttpStatus.OK, response.getStatusCode());
-        log.info(response.getBody());
+    @DynamicPropertySource
+    private static void setProperties(DynamicPropertyRegistry dynamicPropertyRegistry) {
+        dynamicPropertyRegistry.add("spring.datasource.url=", POSTGRES_CONTAINER::getJdbcUrl);
+        log.info(">> " + POSTGRES_CONTAINER.getJdbcUrl());
+        dynamicPropertyRegistry.add("spring.datasource.username=", POSTGRES_CONTAINER::getUsername);
+        dynamicPropertyRegistry.add("spring.datasource.password=", POSTGRES_CONTAINER::getPassword);
+        dynamicPropertyRegistry.add("spring.liquibase.enabled=", () -> "true");
     }
 
-//        ConfirmOperationRequest confirmOperationRequest = new ConfirmOperationRequest();
-//        confirmOperationRequest.setOperationId("1");
-//        confirmOperationRequest.setCode("0000");
-//
-//        response = restTemplate.postForEntity(
-//                HOST + transferServicePort + "/confirmOperation",
-//                confirmOperationRequest,
-//                String.class
-//        );
-//        Assertions.assertEquals(HttpStatus.OK, response.getStatusCode());
+
+    @BeforeEach
+    public void beforeEach() {
+        mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
+
+        User user = new User();
+        user.setId(1L);
+        user.setUsername(LOGIN);
+        user.setPassword(passwordEncoder.encode(PASSWORD));
+        userRepository.save(user);
+        log.info(">>>>>>>>>>>>>>> User saved!" + user.getUsername());
+    }
+
+    @AfterEach
+    public void afterEach() {
+        userRepository.deleteAll();
+        SecurityContextHolder.clearContext();
+    }
+
+    @Test
+    void getAuthTokenPositive() throws Exception {
+        LoginRequest request = new LoginRequest();
+        request.setLogin(LOGIN);
+        request.setPassword(PASSWORD);
+
+        MockHttpServletRequestBuilder postReq = MockMvcRequestBuilders.post(ENDPOINT)
+                .content(objectMapper.writeValueAsString(request))
+                .contentType(MediaType.APPLICATION_JSON);
+
+        String authToken = mockMvc.perform(postReq)
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        log.info("auth-token >>> " + authToken);
+        assertNotNull(authToken);
+        assertTrue(authToken.contains("auth-token"));
+    }
+
+    //Параметризованный тест - разные варианты авторизации
+    @ParameterizedTest
+    @MethodSource("sourceUser")
+    void getAuthTokenNegative(String login, String password) throws Exception {
+        LoginRequest request = new LoginRequest();
+        request.setLogin(login);
+        request.setPassword(password);
+
+        MockHttpServletRequestBuilder postReq = MockMvcRequestBuilders.post(ENDPOINT)
+                .content(objectMapper.writeValueAsString(request))
+                .contentType(MediaType.APPLICATION_JSON);
+
+        mockMvc.perform(postReq)
+                .andExpect(MockMvcResultMatchers.status().isBadRequest());
+    }
+
+
+    private static Stream<Arguments> sourceUser() {
+        return Stream.of(
+                Arguments.of(LOGIN, "b"),
+                Arguments.of(LOGIN, ""),
+                Arguments.of(null, "bssfs"),
+                Arguments.of("b", PASSWORD),
+                Arguments.of("b", ""),
+                Arguments.of("b", null),
+                Arguments.of(null, null),
+                Arguments.of("", "")
+        );
+    }
+
+
 }
