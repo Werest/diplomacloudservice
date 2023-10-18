@@ -1,10 +1,14 @@
-package ru.werest.diplomacloudservice.exception;
+package ru.werest.diplomacloudservice.handler;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import ru.werest.diplomacloudservice.response.ErrorResponse;
+import ru.werest.diplomacloudservice.dto.ErrorResponse;
+import ru.werest.diplomacloudservice.exception.AuthicatedException;
+import ru.werest.diplomacloudservice.exception.FileException;
+import ru.werest.diplomacloudservice.exception.FileNotExistException;
+import ru.werest.diplomacloudservice.exception.MissingValueException;
 
 import java.util.concurrent.atomic.AtomicInteger;
 

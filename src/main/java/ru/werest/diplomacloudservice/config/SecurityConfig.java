@@ -14,6 +14,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -23,7 +24,6 @@ import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import ru.werest.diplomacloudservice.jwt.JWTFilter;
-import ru.werest.diplomacloudservice.services.UserService;
 
 @Configuration
 @EnableWebSecurity
@@ -32,7 +32,7 @@ import ru.werest.diplomacloudservice.services.UserService;
 public class SecurityConfig implements WebMvcConfigurer {
 
     private final JWTFilter jwtFilter;
-    private final UserService userService;
+    private final UserDetailsService userService;
 
     @Bean
     public AuthenticationProvider authenticationProvider() {

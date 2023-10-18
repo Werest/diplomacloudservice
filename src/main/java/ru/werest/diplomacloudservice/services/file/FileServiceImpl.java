@@ -1,4 +1,4 @@
-package ru.werest.diplomacloudservice.services;
+package ru.werest.diplomacloudservice.services.file;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,8 +12,8 @@ import ru.werest.diplomacloudservice.exception.FileNotExistException;
 import ru.werest.diplomacloudservice.exception.MissingValueException;
 import ru.werest.diplomacloudservice.repository.FileRepository;
 import ru.werest.diplomacloudservice.repository.UserRepository;
-import ru.werest.diplomacloudservice.request.ChangeFilenameRequest;
-import ru.werest.diplomacloudservice.response.FileListResponse;
+import ru.werest.diplomacloudservice.dto.ChangeFilenameRequest;
+import ru.werest.diplomacloudservice.dto.FileListResponse;
 
 import java.io.IOException;
 import java.security.Principal;
@@ -24,13 +24,13 @@ import java.util.stream.Collectors;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class FileService {
+public class FileServiceImpl implements FileService {
 
     private final FileRepository repository;
 
     private final UserRepository userRepository;
 
-    private User findUserByName(Principal user) {
+    public User findUserByName(Principal user) {
         User userEntity = userRepository.findUserByUsername(user.getName());
         if (userEntity == null) {
             throw new RuntimeException("Неверно передан пользователь!");
@@ -103,7 +103,7 @@ public class FileService {
                 .collect(Collectors.toList());
     }
 
-    private void validFileName(String filename) {
+    public void validFileName(String filename) {
         if (filename == null || filename.isEmpty()) {
             log.error("Не указано имя файла! Укажите имя файла!");
             throw new MissingValueException("Не указано имя файла! Укажите имя файла!");

@@ -1,4 +1,4 @@
-package ru.werest.diplomacloudservice.services;
+package ru.werest.diplomacloudservice.services.user;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.UserDetails;

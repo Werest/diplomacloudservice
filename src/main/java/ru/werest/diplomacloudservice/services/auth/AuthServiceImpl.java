@@ -1,4 +1,4 @@
-package ru.werest.diplomacloudservice.services;
+package ru.werest.diplomacloudservice.services.auth;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -6,17 +6,18 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
+import ru.werest.diplomacloudservice.dto.LoginRequest;
 import ru.werest.diplomacloudservice.exception.AuthicatedException;
 import ru.werest.diplomacloudservice.jwt.JWTHelper;
-import ru.werest.diplomacloudservice.request.LoginRequest;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class AuthService {
+public class AuthServiceImpl implements AuthService {
 
-    private final UserService userService;
+    private final UserDetailsService userService;
 
     private final JWTHelper jwtHelper;
 

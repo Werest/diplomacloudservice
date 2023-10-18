@@ -27,7 +27,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
 import ru.werest.diplomacloudservice.entity.User;
 import ru.werest.diplomacloudservice.repository.UserRepository;
-import ru.werest.diplomacloudservice.request.LoginRequest;
+import ru.werest.diplomacloudservice.dto.LoginRequest;
 
 import java.util.stream.Stream;
 
@@ -95,9 +95,7 @@ public class IntegrationTest {
 
     @Test
     void getAuthTokenPositive() throws Exception {
-        LoginRequest request = new LoginRequest();
-        request.setLogin(LOGIN);
-        request.setPassword(PASSWORD);
+        LoginRequest request = new LoginRequest(LOGIN, PASSWORD);
 
         MockHttpServletRequestBuilder postReq = MockMvcRequestBuilders.post(ENDPOINT)
                 .content(objectMapper.writeValueAsString(request))
@@ -118,9 +116,7 @@ public class IntegrationTest {
     @ParameterizedTest
     @MethodSource("sourceUser")
     void getAuthTokenNegative(String login, String password) throws Exception {
-        LoginRequest request = new LoginRequest();
-        request.setLogin(login);
-        request.setPassword(password);
+        LoginRequest request = new LoginRequest(login, password);
 
         MockHttpServletRequestBuilder postReq = MockMvcRequestBuilders.post(ENDPOINT)
                 .content(objectMapper.writeValueAsString(request))

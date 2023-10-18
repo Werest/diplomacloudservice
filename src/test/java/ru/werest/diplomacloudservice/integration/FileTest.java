@@ -32,10 +32,10 @@ import ru.werest.diplomacloudservice.entity.File;
 import ru.werest.diplomacloudservice.entity.User;
 import ru.werest.diplomacloudservice.repository.FileRepository;
 import ru.werest.diplomacloudservice.repository.UserRepository;
-import ru.werest.diplomacloudservice.request.ChangeFilenameRequest;
-import ru.werest.diplomacloudservice.request.LoginRequest;
-import ru.werest.diplomacloudservice.response.FileListResponse;
-import ru.werest.diplomacloudservice.services.FileService;
+import ru.werest.diplomacloudservice.dto.ChangeFilenameRequest;
+import ru.werest.diplomacloudservice.dto.LoginRequest;
+import ru.werest.diplomacloudservice.dto.FileListResponse;
+import ru.werest.diplomacloudservice.services.file.FileServiceImpl;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -70,7 +70,7 @@ public class FileTest {
     PasswordEncoder passwordEncoder;
 
     @Autowired
-    FileService fileService;
+    FileServiceImpl fileServiceImpl;
 
     ObjectMapper objectMapper = new ObjectMapper();
 
@@ -115,9 +115,7 @@ public class FileTest {
         user.setPassword(passwordEncoder.encode(PASSWORD));
         userRepository.save(user);
 
-        LoginRequest request = new LoginRequest();
-        request.setLogin(LOGIN);
-        request.setPassword(PASSWORD);
+        LoginRequest request = new LoginRequest(LOGIN, PASSWORD);
 
         MockHttpServletRequestBuilder postReq = MockMvcRequestBuilders.post(ENDPOINT_LOGIN)
                 .content(objectMapper.writeValueAsString(request))
@@ -215,11 +213,10 @@ public class FileTest {
         Mockito.when(principal.getName()).thenReturn(LOGIN);
 
         MockMultipartFile multipartFile = getFileMock();
-        fileService.saveFile(principal, NAME_TEST_IMAGE, multipartFile);
+        fileServiceImpl.saveFile(principal, NAME_TEST_IMAGE, multipartFile);
 
         String newFileName = "152.png";
-        ChangeFilenameRequest request = new ChangeFilenameRequest();
-        request.setFilename(newFileName);
+        ChangeFilenameRequest request = new ChangeFilenameRequest(newFileName);
 
         mockMvc.perform(MockMvcRequestBuilders.put(ENDPOINT_FILE)
                         .param(NAME_COLUMN_CONTROLLER_FILE_UPDATE, NAME_TEST_IMAGE)
@@ -239,11 +236,10 @@ public class FileTest {
         Mockito.when(principal.getName()).thenReturn(LOGIN);
 
         MockMultipartFile multipartFile = getFileMock();
-        fileService.saveFile(principal, NAME_TEST_IMAGE, multipartFile);
+        fileServiceImpl.saveFile(principal, NAME_TEST_IMAGE, multipartFile);
 
         String newFileName = "152.png";
-        ChangeFilenameRequest request = new ChangeFilenameRequest();
-        request.setFilename(newFileName);
+        ChangeFilenameRequest request = new ChangeFilenameRequest(newFileName);
 
         mockMvc.perform(MockMvcRequestBuilders.put(ENDPOINT_FILE)
                         .param(NAME_COLUMN_CONTROLLER_FILE_UPDATE, NAME_TEST_IMAGE)
@@ -258,8 +254,7 @@ public class FileTest {
     @Test
     void updateTestNegativeFile() throws Exception {
         String newFileName = "152.png";
-        ChangeFilenameRequest request = new ChangeFilenameRequest();
-        request.setFilename(newFileName);
+        ChangeFilenameRequest request = new ChangeFilenameRequest(newFileName);
 
         mockMvc.perform(MockMvcRequestBuilders.put(ENDPOINT_FILE)
                         .param(NAME_COLUMN_CONTROLLER_FILE_UPDATE, NAME_TEST_IMAGE)
@@ -278,11 +273,10 @@ public class FileTest {
         Mockito.when(principal.getName()).thenReturn(LOGIN);
 
         MockMultipartFile multipartFile = getFileMock();
-        fileService.saveFile(principal, NAME_TEST_IMAGE, multipartFile);
+        fileServiceImpl.saveFile(principal, NAME_TEST_IMAGE, multipartFile);
 
         String newFileName = "";
-        ChangeFilenameRequest request = new ChangeFilenameRequest();
-        request.setFilename(newFileName);
+        ChangeFilenameRequest request = new ChangeFilenameRequest(newFileName);
 
         mockMvc.perform(MockMvcRequestBuilders.put(ENDPOINT_FILE)
                         .param(NAME_COLUMN_CONTROLLER_FILE_UPDATE, NAME_TEST_IMAGE)
@@ -299,9 +293,9 @@ public class FileTest {
         Mockito.when(principal.getName()).thenReturn(LOGIN);
 
         MockMultipartFile multipartFile = getFileMock();
-        fileService.saveFile(principal, NAME_TEST_IMAGE, multipartFile);
-        fileService.saveFile(principal, "NAME_TEST_IMAGE_0.png", multipartFile);
-        fileService.saveFile(principal, "NAME_TEST_IMAGE_1.png", multipartFile);
+        fileServiceImpl.saveFile(principal, NAME_TEST_IMAGE, multipartFile);
+        fileServiceImpl.saveFile(principal, "NAME_TEST_IMAGE_0.png", multipartFile);
+        fileServiceImpl.saveFile(principal, "NAME_TEST_IMAGE_1.png", multipartFile);
 
         String response = mockMvc
                 .perform(MockMvcRequestBuilders.get(ENDPOINT_LIST)
